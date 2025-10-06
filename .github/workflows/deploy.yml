@@ -1,0 +1,43 @@
+name: Deploy to Staging and Production
+
+on:
+  push:
+    branches:
+      - master
+      - stage
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: |
+          if [ -f package.json ] && grep -q '"test"' package.json; then npm test; else echo "No test script"; fi
+      - name: Build Docker image
+        run: docker build -t graphql-app:${{ github.sha }} .
+
+  deploy-stage:
+    needs: build
+    if: github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploying to staging environment..."
+        # Add your staging deployment steps here (e.g., push to registry, deploy to server)
+
+  deploy-prod:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Production
+        run: echo "Deploying to production environment..."
+        # Add your production deployment steps here (e.g., push to registry, deploy to server)
